@@ -13,14 +13,23 @@ async fn main() -> std::io::Result<()> {
 async fn get_info(
     Path((proxy, wspw)): Path<(String, String)>,
 ) -> Result<String, (StatusCode, String)> {
-    let zrok_output = err(Command::new("zrok")
+    let mut zrok_output = err(Command::new("zrok")
         .args(["access", "private", proxy.as_str(), "--headless"])
         .spawn())?;
 
     let obs_output = err(Command::new("obs-cmd")
         .args(["-w", &format!("obsws://localhost:9191/{}", wspw), "info"])
         .output())?;
-    Ok(format!("{:?}\n{:?}", zrok_output, obs_output))
+    err(zrok_output.kill())?;
+    Ok(format!(
+        "{:?}\n{:?}",
+        zrok_output,
+        String::from_utf8(if obs_output.stderr.is_empty() {
+            obs_output.stdout
+        } else {
+            obs_output.stderr
+        })
+    ))
 }
 async fn stop_streaming(
     Path((proxy, wspw)): Path<(String, String)>,
