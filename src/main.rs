@@ -6,7 +6,7 @@ use axum::{extract::Path, http::StatusCode, routing::get, Router};
 async fn main() -> std::io::Result<()> {
     let app = Router::new().route("/:proxy/:wspw", get(get_info).delete(stop_streaming));
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0").await?;
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:80").await?;
     axum::serve(listener, app).await
 }
 
