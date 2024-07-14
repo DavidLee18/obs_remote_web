@@ -41,8 +41,7 @@ async fn get_info(
         .output())?;
     err(zrok_output.kill())?;
     Ok(format!(
-        "{:?}\n{:?}",
-        zrok_output,
+        "{:?}",
         String::from_utf8(if obs_output.stderr.is_empty() {
             obs_output.stdout
         } else {
@@ -55,7 +54,7 @@ async fn stop_streaming(
     port: Option<Query<Port>>,
 ) -> Result<String, (StatusCode, String)> {
     let Query(Port { port }) = port.unwrap_or_default();
-    let mut zrok_output = err(Command::new("zrok")
+    let mut zrok = err(Command::new("zrok")
         .args([
             "access",
             "private",
@@ -74,16 +73,15 @@ async fn stop_streaming(
             "stop",
         ])
         .output())?;
-    err(zrok_output.kill())?;
-    Ok(format!(
-        "{:?}\n{:?}",
-        zrok_output,
-        String::from_utf8(if obs_output.stderr.is_empty() {
-            obs_output.stdout
-        } else {
-            obs_output.stderr
-        })
-    ))
+
+    err(zrok.kill())?;
+
+    String::from_utf8(if obs_output.stderr.is_empty() {
+        obs_output.stdout
+    } else {
+        obs_output.stderr
+    })
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("{:?}", e)))
 }
 
 #[derive(Deserialize)]
@@ -99,9 +97,6 @@ impl Default for Port {
     }
 }
 
-fn err<T, E>(r: Result<T, E>) -> Result<T, (StatusCode, String)>
-where
-    E: Error,
-{
+fn err<T, E: Error>(r: Result<T, E>) -> Result<T, (StatusCode, String)> {
     r.map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("{:?}", e)))
 }
