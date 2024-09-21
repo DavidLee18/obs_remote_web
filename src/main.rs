@@ -33,7 +33,7 @@ async fn get_info(
         ])
         .spawn())?;
 
-    let obs_output = err(Command::new("obs-cmd")
+    let obs_output = err(Command::new("/home/ubuntu/obs-cmd")
         .args([
             "-w",
             &format!("obsws://localhost:{}/{}", port, wspw),
@@ -41,6 +41,7 @@ async fn get_info(
         ])
         .output())?;
     err(zrok_output.kill())?;
+    let zrok_disable = err(Command::new("zrok").args(["disable"]).output())?;
     Ok(format!(
         "{:?}",
         String::from_utf8(if obs_output.stderr.is_empty() {
@@ -67,7 +68,7 @@ async fn stop_streaming(
         ])
         .spawn())?;
 
-    let obs_output = err(Command::new("obs-cmd")
+    let obs_output = err(Command::new("/home/ubuntu/obs-cmd")
         .args([
             "-w",
             &format!("obsws://localhost:{}/{}", port, wspw),
@@ -77,7 +78,7 @@ async fn stop_streaming(
         .output())?;
 
     err(zrok.kill())?;
-
+    let zrok_disable = err(Command::new("zrok").args(["disable"]).output())?;
     String::from_utf8(if obs_output.stderr.is_empty() {
         obs_output.stdout
     } else {
